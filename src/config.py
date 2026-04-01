@@ -1,5 +1,7 @@
 import os
 from dotenv import load_dotenv
+from urllib.parse import quote_plus
+
 
 load_dotenv()
 
@@ -15,20 +17,22 @@ class Settings:
     PORT: int = int(os.getenv("PORT", 8000))
 
     # ==================== Database Settings ====================
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
     DB_PORT: int = int(os.getenv("DB_PORT", 5432))
     DB_NAME: str = os.getenv("DB_NAME", "Inventory")
     DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")
+    DB_PASSWORD: str = quote_plus(os.getenv("DB_PASSWORD", ""))
 
     # Async PostgreSQL Database URL
+
     @property
-    def database_url(self) -> str:
+    def DATABASE_URL(self):
         return (
-            f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@"
-            f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+            f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
 
+    print(DATABASE_URL)
     # ==================== Application Metadata ====================
     APP_NAME: str = "inventory-sales-system"
     APP_VERSION: str = "0.1.0"
@@ -69,3 +73,4 @@ class Settings:
 
 # Create a global settings instance
 settings = Settings()
+print(settings.DATABASE_URL)

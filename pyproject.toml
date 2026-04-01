@@ -5,7 +5,9 @@ description = "Inventory and sales management system for small businesses with s
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
+    "psycopg2-binary>=2.9.11",
     "python-dotenv>=1.2.2",
+    "sqlalchemy>=2.0.48",
 ]
 
 [dependency-groups]
