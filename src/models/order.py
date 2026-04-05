@@ -1,73 +1,49 @@
-from pydantic import BaseModel, Field, computed_field
-from typing import List, Optional
-from datetime import datetime
+from decimal import Decimal
 from enum import Enum
 
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
+from typing import List, Optional
 
-# ORDER STATUS
-class OrderStatus(str, Enum):
-    PENDING = "pending"
-    PAID = "paid"
-    SHIPPED = "shipped"
-    CANCELLED = "cancelled"
-
-
-class OrderItem(BaseModel):
+class OrderItemBase(BaseModel):
     product_id: int
     quantity: int = Field(..., gt=0)
-    price: float = Field(..., gt=0)
 
-    @computed_field
-    @property
-    def total(self) -> float:
-        return self.quantity * self.price
+class OrderItemCreate(OrderItemBase):
+    pass
 
+class OrderItemResponse(OrderItemBase):
+    id: int
+    unit_price: Decimal          # Price at the time of sale
+    total_price: Decimal
 
-class Order(BaseModel):
-    order_id: Optional[int] = None
-    customer_name: str
+    model_config = ConfigDict(from_attributes=True)
 
-    items: List[OrderItem]
+class SalesOrderBase(BaseModel):
+    customer_name: Optional[str] = Field(None, max_length=200)
+    notes: Optional[str] = None
 
-    # DISCOUNT (%)
-    discount_percent: float = Field(default=0, ge=0, le=100)
+class SalesOrderCreate(SalesOrderBase):
+    items: List[OrderItemCreate] = Field(..., min_length=1)
 
-    # VAT (%)
-    vat_percent: float = Field(default=15, ge=0)
-    status: OrderStatus = OrderStatus.PENDING
+class OrderStatus(str, Enum):
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    PENDING = "pending"
+class SalesOrderResponse(SalesOrderBase):
+    id: int
+    order_number: str
+    total_amount: Decimal
+    status: OrderStatus = OrderStatus.COMPLETED
+    created_at: datetime
+    items: List[OrderItemResponse]
 
-    created_at: datetime = datetime.now()
+    model_config = ConfigDict(from_attributes=True)
 
-    # subtotal
-    @computed_field
-    @property
-    def subtotal(self) -> float:
-        return sum(item.total for item in self.items)
-
-    # discount amount
-    @computed_field
-    @property
-    def discount_amount(self) -> float:
-        return (self.subtotal * self.discount_percent) / 100
-
-    # VAT amount
-    @computed_field
-    @property
-    def vat_amount(self) -> float:
-        return (self.subtotal - self.discount_amount) * (self.vat_percent / 100)
-
-    # final total
-    @computed_field
-    @property
-    def total_amount(self) -> float:
-        return self.subtotal - self.discount_amount + self.vat_amount
-
-    # total items
-    @computed_field
-    @property
-    def total_items(self) -> int:
-        return sum(item.quantity for item in self.items)
-
-    # empty check
-    def is_empty(self) -> bool:
-        return len(self.items) == 0
+# For reports
+class LowStockAlert(BaseModel):
+    product_id: int
+    name: str
+    current_stock: int
+    reorder_point: int
+    deficit: int = Field(..., ge=0)

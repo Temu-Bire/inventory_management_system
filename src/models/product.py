@@ -1,36 +1,31 @@
-from pydantic import BaseModel, Field, computed_field
+from decimal import Decimal
+
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime
 from typing import Optional
-from datetime import datetime, date
 
+class ProductBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=1000)
+    price: Decimal = Field(..., gt=0)
+    reorder_point: int = Field(0, ge=0)          # When to trigger low-stock alert
+    category: Optional[str] = Field(None, max_length=100)
 
-class Product(BaseModel):
-    product_id: Optional[int] = None
-    name: str
+class ProductCreate(ProductBase):
+    initial_stock: int = Field(0, ge=0)
+
+class ProductUpdate(BaseModel):
+    name: Optional[str] = Field(None, min_length=1, max_length=200)
+    description: Optional[str] = Field(None, max_length=1000)
+    price: Optional[Decimal] = Field(None, gt=0)
+    reorder_point: Optional[int] = Field(None, ge=0)
     category: Optional[str] = None
 
-    price: float = Field(..., gt=0)
-    cost_price: float = Field(..., gt=0)
+class ProductResponse(ProductBase):
+    id: int
+    current_stock: int
+    is_low_stock: bool
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
-    stock_quantity: int = Field(..., ge=0)
-
-    currency: str = "USD"  # currency support
-
-    expiry_date: Optional[date] = None  # expiry tracking
-
-    created_at: datetime = datetime.now()
-
-    # LOW STOCK CHECK
-    def is_low_stock(self) -> bool:
-        return self.stock_quantity < 5
-
-    # EXPIRY CHECK
-    def is_expired(self) -> bool:
-        if self.expiry_date:
-            return date.today() > self.expiry_date
-        return False
-
-    # PROFIT PER UNIT
-    @computed_field
-    @property
-    def profit_per_unit(self) -> float:
-        return self.price - self.cost_price
+    model_config = ConfigDict(from_attributes=True)  # Allows reading from SQLAlchemy objects

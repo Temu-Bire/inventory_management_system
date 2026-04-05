@@ -2,11 +2,10 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import quote_plus
 
-
 load_dotenv()
 
 
-class Settings:
+class Settings():
     # ==================== Application Settings ====================
     APP_ENV: str = os.getenv("APP_ENV", "development")
     DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
@@ -32,8 +31,6 @@ class Settings:
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
 
-    print(DATABASE_URL)
-    # ==================== Application Metadata ====================
     APP_NAME: str = "inventory-sales-system"
     APP_VERSION: str = "0.1.0"
     DESCRIPTION: str = (
@@ -73,4 +70,3 @@ class Settings:
 
 # Create a global settings instance
 settings = Settings()
-print(settings.DATABASE_URL)
