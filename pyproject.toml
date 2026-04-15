@@ -1,17 +1,11 @@
 [project]
 name = "inventory-sales-system"
 version = "0.1.0"
-description = "Inventory and sales management system for small businesses with stock tracking, low-stock alerts, and sales analytics."
+description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
-    "psycopg2-binary>=2.9.11",
-    "pydantic>=2.12.5",
-    "python-dotenv>=1.2.2",
-    "sqlalchemy>=2.0.48",
-]
-
-[dependency-groups]
-dev = [
-    "pytest>=9.0.2",
+    "asyncpg>=0.31.0",
+    "dotenv>=0.9.9",
+    "sqlalchemy>=2.0.49",
 ]

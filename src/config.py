@@ -5,68 +5,75 @@ from urllib.parse import quote_plus
 load_dotenv()
 
 
-class Settings():
-    # ==================== Application Settings ====================
-    APP_ENV: str = os.getenv("APP_ENV", "development")
-    DEBUG: bool = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO").upper()
+class Settings:
+    def __init__(self):
+        # ==================== Application Settings ====================
+        self.APP_ENV = os.getenv("APP_ENV", "development")
+        self.DEBUG = os.getenv("DEBUG", "true").lower() in ("true", "1", "yes")
+        self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
-    # ==================== Server Settings ====================
-    HOST: str = os.getenv("HOST", "0.0.0.0")
-    PORT: int = int(os.getenv("PORT", 8000))
+        # ==================== Server Settings ====================
+        self.HOST = os.getenv("HOST", "0.0.0.0")
+        self.PORT = int(os.getenv("PORT", 8000))
 
-    # ==================== Database Settings ====================
-    DB_HOST: str = os.getenv("DB_HOST", "127.0.0.1")
-    DB_PORT: int = int(os.getenv("DB_PORT", 5432))
-    DB_NAME: str = os.getenv("DB_NAME", "Inventory")
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = quote_plus(os.getenv("DB_PASSWORD", ""))
+        # ==================== Database Settings ====================
+        self.DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
+        self.DB_PORT = int(os.getenv("DB_PORT", 5432))
+        self.DB_NAME = os.getenv("DB_NAME", "inventory")
+        self.DB_USER = os.getenv("DB_USER", "postgres")
+        self.DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD", ""))
 
-    # Async PostgreSQL Database URL
+        # ==================== App Info ====================
+        self.APP_NAME = "inventory-sales-system"
+        self.APP_VERSION = "0.1.0"
+        self.DESCRIPTION = (
+            "Inventory and sales management system for small businesses with "
+            "stock tracking, low-stock alerts, and sales analytics."
+        )
 
+    # ==================== DATABASE URL ====================
     @property
     def DATABASE_URL(self):
         return (
-            f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}"
+            f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}"
             f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
         )
 
-    APP_NAME: str = "inventory-sales-system"
-    APP_VERSION: str = "0.1.0"
-    DESCRIPTION: str = (
-        "Inventory and sales management system for small businesses with "
-        "stock tracking, low-stock alerts, and sales analytics."
-    )
+    # ==================== VALIDATION ====================
+    def validate(self):
+        required_vars = {
+            "DB_HOST": self.DB_HOST,
+            "DB_USER": self.DB_USER,
+            "DB_NAME": self.DB_NAME,
+            "DB_PASSWORD": self.DB_PASSWORD,
+        }
 
-    @classmethod
-    def validate(cls):
-        """Validate required configuration values"""
-        required_vars = ["DB_HOST", "DB_USER", "DB_NAME", "DB_PASSWORD"]
-        missing = [var for var in required_vars if not getattr(cls, var, None)]
+        missing = [key for key, value in required_vars.items() if not value]
 
         if missing:
             raise ValueError(
-                (
-                    f"Missing required environment variables: "
-                    f"{', '.join(missing)}\n"
-                    "Please check your .env file."
-                )
+                f"Missing required environment variables: {', '.join(missing)}"
             )
+
         valid_log_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
-        if cls.LOG_LEVEL not in valid_log_levels:
-            raise ValueError(f"Invalid LOG_LEVEL: {cls.LOG_LEVEL}")
-        if cls.APP_ENV not in ["development", "production", "testing"]:
+        if self.LOG_LEVEL not in valid_log_levels:
+            raise ValueError(f"Invalid LOG_LEVEL: {self.LOG_LEVEL}")
+
+        if self.APP_ENV not in ["development", "production", "testing"]:
             raise ValueError(
-                f"Invalid APP_ENV: {cls.APP_ENV}. Must be one of: "
-                "development, production, testing"
+                f"Invalid APP_ENV: {self.APP_ENV}. Must be development, production, or testing"
             )
 
-        if cls.PORT < 1024 or cls.PORT > 65535:
+        if self.APP_ENV == "production" and not self.DB_PASSWORD:
+            raise ValueError("DB_PASSWORD required in production")
+
+        if self.PORT < 1024 or self.PORT > 65535:
             raise ValueError(
-                f"Invalid PORT: {cls.PORT}. Must be between 1024 and 65535."
+                f"Invalid PORT: {self.PORT}. Must be between 1024 and 65535."
             )
 
 
-# Create a global settings instance
+# ==================== GLOBAL INSTANCE ====================
 settings = Settings()
+settings.validate()
