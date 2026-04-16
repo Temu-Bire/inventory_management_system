@@ -1,3 +1,5 @@
+from calendar import c
+
 from sqlalchemy import Column, Integer, String
 from ..db.database import Base
 
@@ -6,5 +8,4 @@ class Supplier(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
-    phone = Column(String)
-    address = Column(String)
+    contact_info = Column(String)
